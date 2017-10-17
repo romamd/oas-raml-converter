@@ -81,9 +81,9 @@ class RamlTraitConverter extends Converter {
 		methodConverter.version = this.version;
 		
 		if (!_.isEmpty(ramlDef)) {
-			const traitName: string = Object.keys(ramlDef)[0];
+			const traitName: string = ramlDef.name;
 			model.name = traitName;
-			const def = ramlDef[traitName];
+			const def = ramlDef;
 			if (def.hasOwnProperty('usage')) model.usage = def.usage;
 			const method: Method = methodConverter._import(def);
 			if (!_.isEmpty(method)) model.method = method;

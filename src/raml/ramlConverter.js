@@ -23,30 +23,24 @@ const RamlAnnotationTypeConverter = require('../raml/ramlAnnotationTypeConverter
 const helper = require('../helpers/raml');
 const YAML = require('js-yaml');
 const fs = require('fs');
-const toJSONOptions = { serializeMetadata: false };
 const RamlErrorModel = require('../helpers/ramlErrorModel');
 const jsonHelper = require('../utils/json');
+const converterHelper = require('../helpers/converter');
+const os = require('os');
+const path = require('path');
 
 class RamlConverter extends Converter {
 
-	static detectFormat(data) {
-		if (!data) return;
-		data = _.trim(data);
-		
-		if (/#%RAML[\s]*1\.?0?/.test(data)) return 'RAML10';
-		if (/#%RAML[\s]*0\.?8?/.test(data)) return 'RAML08';
-	}
-	
 	_loadFile(filePath:string, options:any) {
 		this.filePath = filePath;
-		const fileContent = fs.readFileSync(filePath, 'utf8');
-		this.format = RamlConverter.detectFormat(fileContent);
+		this.fileContent = fs.readFileSync(filePath, 'utf8');
 		return new Promise((resolve, reject) => {
-			parser.loadApi(filePath, Converter._options(options)).then((api) => {
+			parser.load(filePath, Converter._options(options)).then(api => {
 				try {
-					const errors = api.errors();
+					const errors = api.errors;
 					if (!_.isEmpty(errors)) this.errors = jsonHelper.parse(errors);
-					this.data = api.expand(true).toJSON(toJSONOptions);
+					this.format = api.ramlVersion;
+					this.data = api.specification;
 					resolve();
 				}
 				catch (e) {
@@ -60,18 +54,22 @@ class RamlConverter extends Converter {
 	
 	_loadData(data:string, options:any) {
 		this.fileContent = data;
-		this.format = RamlConverter.detectFormat(data);
-		return new Promise((resolve, reject) => {
-			const parsedData = parser.parseRAMLSync(data, options);
-			if (parsedData.name === 'Error') {
-				reject();
-			} else {
-				const errors = parsedData.errors();
-				if (!_.isEmpty(errors)) this.errors = jsonHelper.parse(errors);
-				this.data = parsedData.expand(true).toJSON(toJSONOptions);
-				resolve();
-			}
-		});
+		const fPath = os.tmpdir() + path.sep +  Date.now() + '.yaml';
+		const file = fs.writeFileSync(fPath, data, 'utf8');
+		
+		return this._loadFile(fPath, options);
+		
+		// return new Promise((resolve, reject) => {
+		// 	const parsedData = parser.parseRAMLSync(data, options);
+		// 	if (parsedData.name === 'Error') {
+		// 		reject();
+		// 	} else {
+		// 		const errors = parsedData.errors();
+		// 		if (!_.isEmpty(errors)) this.errors = jsonHelper.parse(errors);
+		// 		this.data = parsedData.expand(true).toJSON(toJSONOptions);
+		// 		resolve();
+		// 	}
+		// });
 	}
 	
 	export(model:Root) {
@@ -104,6 +102,8 @@ class RamlConverter extends Converter {
 	}
 
 	import(ramlDef:any, addErrorsToModel:boolean) {
+		converterHelper.removeAllAutogenerateAttribute(ramlDef);
+		
 		const rootConverter = new RamlRootConverter(new Root());
 		rootConverter.version = this.format;
 		const model: Root = rootConverter.import(ramlDef);

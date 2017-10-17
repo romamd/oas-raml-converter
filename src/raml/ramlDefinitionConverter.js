@@ -308,31 +308,27 @@ class RamlDefinitionConverter extends Converter {
 
 		helper.removePropertiesFromObject(ramlDefs, ['fixedFacets']);
 
-		for (const index in ramlDefs) {
-			if (!ramlDefs.hasOwnProperty(index)) continue;
-			const entry = ramlDefs[index];
+		for (const key in ramlDefs) {
+			if (!ramlDefs.hasOwnProperty(key)) continue;
+			const value = ramlDefs[key];
 
-			for (const key in entry) {
-				if (!entry.hasOwnProperty(key)) continue;
-				const value = entry[key];
-				if (value.hasOwnProperty('typePropertyKind') && value.typePropertyKind === 'JSON') {
-					const jsonValue = RamlDefinitionConverter._readTypeAttribute(value.type);
-					const parse = jsonHelper.parse(jsonValue);
-					if (parse.hasOwnProperty('definitions')) {
-						const definitions: Definition[] = this.import(RamlDefinitionConverter._convertMapToArray(parse.definitions));
-						result = result.concat(definitions);
-						delete parse.definitions;
-						value.type[0] = jsonHelper.stringify(parse);
-					}
-					const definition: Definition = this._import(parse);
-					definition.name = key;
-					definition.jsonValue = jsonValue;
-					result.push(definition);
-				} else {
-					const definition: Definition = this._import(value);
-					definition.name = key;
-					result.push(definition);
+			if (value.hasOwnProperty('typePropertyKind') && value.typePropertyKind === 'JSON') {
+				const jsonValue = RamlDefinitionConverter._readTypeAttribute(value.type);
+				const parse = jsonHelper.parse(jsonValue);
+				if (parse.hasOwnProperty('definitions')) {
+					const definitions: Definition[] = this.import(RamlDefinitionConverter._convertMapToArray(parse.definitions));
+					result = result.concat(definitions);
+					delete parse.definitions;
+					value.type[0] = jsonHelper.stringify(parse);
 				}
+				const definition: Definition = this._import(parse);
+				definition.name = key;
+				definition.jsonValue = jsonValue;
+				result.push(definition);
+			} else {
+				const definition: Definition = this._import(value);
+				definition.name = key;
+				result.push(definition);
 			}
 		}
 

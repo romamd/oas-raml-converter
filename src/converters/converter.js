@@ -13,6 +13,9 @@ class Converter {
 	static _options(options) {
 		const validate = options && (options.validate === true || options.validateImport === true);
 		const parseOptions = {
+			expandLibraries: true,
+			unfoldTypes: false,
+			serializeMetadata: false,
 			attributeDefaults: false,
 			rejectOnErrors: validate
 		};

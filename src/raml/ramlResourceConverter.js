@@ -339,7 +339,9 @@ class RamlResourceConverter extends Converter {
 			'relativeUri': 'relativePath'
 		};
 
-		const attrIdSkip = ['type', 'methods', 'resources', 'relativeUriPathSegments', 'uriParameters', 'baseUriParameters', 'annotations', 'absoluteUri', 'is', 'securedBy'];
+		const attrIdSkip = ['type', 'methods', 'resources', 'relativeUriPathSegments', 'uriParameters', 'baseUriParameters', 
+			'annotations', 'absoluteUri', 'is', 'securedBy', 'parentUri', 'completeRelativeUri'];
+		
 		const model: Resource = RamlResourceConverter.createResource(ramlDef, attrIdMap, attrIdSkip);
 		const isRaml08Version: boolean = ramlHelper.isRaml08Version(this.version);
 
@@ -417,7 +419,7 @@ class RamlResourceConverter extends Converter {
 		}
 		
 		if (ramlDef.hasOwnProperty('methods')) {
-			if (_.isArray(ramlDef.methods) && !_.isEmpty(ramlDef.methods)) {
+			if (!_.isEmpty(ramlDef.methods)) {
 				const methodConverter = new RamlMethodConverter(this.model, null, this.def);
 				methodConverter.version = this.version;
 				const methods: Method[] = methodConverter.import(ramlDef.methods);
